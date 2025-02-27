@@ -1,4 +1,3 @@
-// Getting elements from HTML
 let input = document.getElementById('taskInput');
 let action_btn = document.getElementById('addTaskBtn');
 let tasklist = document.getElementById('taskList');
@@ -10,7 +9,7 @@ document.addEventListener('DOMContentLoaded', loadTasks);
 function loadTasks() {
   let tasks = getTaskFromLocal();
   tasks.forEach(task => {
-    addTaskToDOM(task);
+    addTaskToDOM(task.text, task.completed);
   });
 }
 
@@ -35,19 +34,25 @@ function addTask() {
     return;
   }
 
-  addTaskToDOM(tasktext); // Add task to the DOM
-  saveTaskToLocal(tasktext); // Save task to local storage
+  addTaskToDOM(tasktext, false); // Add task to the DOM
+  saveTaskToLocal({ text: tasktext, completed: false }); // Save task to local storage
   input.value = ''; // Clear the input field
 }
 
 // Function to add a task to the DOM
-function addTaskToDOM(tasktext) {
+function addTaskToDOM(tasktext, isCompleted) {
+  if (!tasktext) return; // Prevent empty tasks from being added
+
   const li = document.createElement('li');
 
-  // Create a span to hold the task text
   const taskSpan = document.createElement('span');
   taskSpan.textContent = tasktext;
   li.appendChild(taskSpan);
+
+
+  if (isCompleted) {
+    li.classList.add('completed');
+  }
 
   // Create the Delete button
   const deletebtn = document.createElement('button');
@@ -68,9 +73,9 @@ function addTaskToDOM(tasktext) {
 }
 
 // Function to save a task to local storage
-function saveTaskToLocal(tasktext) {
+function saveTaskToLocal(task) {
   let tasks = getTaskFromLocal();
-  tasks.push(tasktext);
+  tasks.push(task);
   localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
@@ -83,12 +88,24 @@ function deleteTasks(event) {
 
   // Remove the task from local storage
   let tasks = getTaskFromLocal();
-  tasks = tasks.filter(task => task !== tasktext); // Filter out the deleted task
+  tasks = tasks.filter(task => task.text !== tasktext); // Filter out the deleted task
   localStorage.setItem('tasks', JSON.stringify(tasks)); // Save updated tasks
 }
 
 // Function to mark a task as complete
 function completeTasks(event) {
   const li = event.target.parentElement; // Get the parent <li> element
+  const tasktext = li.querySelector('span').textContent; // Get the task text
+
   li.classList.toggle('completed'); // Toggle the 'completed' class
+
+  // Update the task in local storage
+  let tasks = getTaskFromLocal();
+  tasks = tasks.map(task => {
+    if (task.text === tasktext) {
+      task.completed = !task.completed; // Toggle completed status
+    }
+    return task;
+  });
+  localStorage.setItem('tasks', JSON.stringify(tasks)); // Save updated tasks
 }
